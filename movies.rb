@@ -11,26 +11,42 @@ end
 
 get '/' do
   #Add code here
+erb :index
 end
 
 
 #Add code here
+get '/results' do
+  c = PGconn.new(:host => "localhost", :dbname => dbname)
+  @movies = c.exec_params("select * from movie WHERE title = $1;",[params["title"]])
+  c.close
+  erb :results
+end
 
 
-get '/movies/new' do
-  erb :new_movie
+get '/movie/:id' do
+#sections 3 and 4
+c = PGconn.new(:host => "localhost", :dbname => dbname)
+  @movie = c.exec_params("select * from movie WHERE id = $1;",[params["id"]])
+  c.close
+erb :show
+end
+
+get'/movies/new' do
+erb :new
 end
 
 post '/movies' do
   c = PGconn.new(:host => "localhost", :dbname => dbname)
-  c.exec_params("INSERT INTO movies (title, year) VALUES ($1, $2)",
+  c.exec_params("INSERT INTO movie (title, year) VALUES ($1, $2);",
                   [params["title"], params["year"]])
   c.close
   redirect '/'
+  
 end
 
 def dbname
-  "testdb"
+  "movie"
 end
 
 def create_movies_table
@@ -49,7 +65,7 @@ end
 
 def drop_movies_table
   connection = PGconn.new(:host => "localhost", :dbname => dbname)
-  connection.exec "DROP TABLE movies;"
+  connection.exec "DROP TABLE movie;"
   connection.close
 end
 
@@ -62,7 +78,7 @@ def seed_movies_table
  
   c = PGconn.new(:host => "localhost", :dbname => dbname)
   movies.each do |p|
-    c.exec_params("INSERT INTO movies (title, year) VALUES ($1, $2);", p)
+    c.exec_params("INSERT INTO movie (title, year) VALUES ($1, $2);", p)
   end
   c.close
 end
